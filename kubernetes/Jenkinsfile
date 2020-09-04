@@ -26,10 +26,12 @@ containerTemplate(name: 'kubectl', image: 'roffe/kubectl', command: 'cat', ttyEn
 		// Slack - 빌드 시작시
 		notifySlack("STARTED", "#0000FF")
 
-		// #1 Github 소스 가져오기
+		// #1 Github 소스 가져오기		
+		notifySlack("get Source", "#FF77FF")
 		stage('Get Source') {
 		git credentialsId: 'github-lab19', url: 'https://github.com/cloudnativeacademy-lab19/cicd-front.git', branch: 'master'
 		}
+
 		// #2 Properties 파일 읽기	
 		def props = readProperties file:"./kubernetes/pipeline.properties"
 		def tag = props["version"]
@@ -50,6 +52,7 @@ containerTemplate(name: 'kubectl', image: 'roffe/kubectl', command: 'cat', ttyEn
 		tag = tag+"-"+timeStamp
 
 		// #3 빌드 Stage
+		notifySlack("빌드 Stage", "#FF77FF")
 		stage('Build') {
 			container('npm') {
 				sh "npm install"
@@ -57,6 +60,7 @@ containerTemplate(name: 'kubectl', image: 'roffe/kubectl', command: 'cat', ttyEn
 		}
 
 		// #4 Sonarqube 정적분석 Stage
+		notifySlack("Sonarqube 정적분석 Stage", "#FF77FF")
 		stage('Static Code Analysis') {
 			container('scanner') {
 				sh "sonar-scanner \
@@ -68,6 +72,7 @@ containerTemplate(name: 'kubectl', image: 'roffe/kubectl', command: 'cat', ttyEn
 		}
 
 		// #5 컨테이너 이미지 생성 Stage
+		notifySlack("컨테이너 이미지 생성 Stage", "#FF77FF")
 		stage('Dockerizing') {
 			container('docker') {
 				docker.withRegistry("${dockerRegistry}", "${credentialRegistry}") {
@@ -79,6 +84,7 @@ containerTemplate(name: 'kubectl', image: 'roffe/kubectl', command: 'cat', ttyEn
 			}
 		}
 		// #6 배포 Stage
+		notifySlack("배포 Stage", "#FF77FF")
 		stage('Deploy') {
 			container('kubectl') {
 				sh "kubectl apply -n ${namespace} -f ${deployment}"
